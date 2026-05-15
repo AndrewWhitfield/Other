@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Executable entry point. Wires DI, selects the correct platform project,
+         and launches the Avalonia application. Contains no business logic. -->
+    <OutputType Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">WinExe</OutputType>
+    <OutputType Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'windows'">Exe</OutputType>
+    <TargetFrameworks>net10.0-windows;net10.0-macos</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!-- Required by Avalonia on macOS -->
+    <CFBundleName>Restart Intune</CFBundleName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.15" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.15" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.15" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.15" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Restart.Intune.Core\Restart.Intune.Core.csproj" />
+    <ProjectReference Include="..\Restart.Intune.UI\Restart.Intune.UI.csproj" />
+  </ItemGroup>
+
+  <!-- Copy Dependencies and PowerShell folders from Restart.Intune.UI into publish output -->
+  <ItemGroup>
+    <None Include="..\Restart.Intune.UI\Dependencies\**\*.*">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Link>Dependencies\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+    <None Include="..\Restart.Intune.UI\PowerShell\**\*.*">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Link>PowerShell\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
+  <Target Name="CopyUiFoldersToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <_UiDependencies Include="..\Restart.Intune.UI\Dependencies\**\*.*" />
+      <_UiPowerShell Include="..\Restart.Intune.UI\PowerShell\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_UiDependencies)"
+          DestinationFiles="@(_UiDependencies->'$(PublishDir)Dependencies\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_UiPowerShell)"
+          DestinationFiles="@(_UiPowerShell->'$(PublishDir)PowerShell\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- Platform project references are conditional so each OS only pulls its own impl -->
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+    <ProjectReference Include="..\Restart.Intune.Platform.Windows\Restart.Intune.Platform.Windows.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'macos'">
+    <ProjectReference Include="..\Restart.Intune.Platform.macOS\Restart.Intune.Platform.macOS.csproj" />
+  </ItemGroup>
+
+</Project>

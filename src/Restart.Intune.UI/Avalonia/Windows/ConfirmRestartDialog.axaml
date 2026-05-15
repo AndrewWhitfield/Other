@@ -1,0 +1,195 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="Restart.Intune.UI.Avalonia.Windows.ConfirmRestartDialog"
+        x:CompileBindings="False"
+        Title="Confirm Restart"
+        SystemDecorations="None"
+        Background="Transparent"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        SizeToContent="WidthAndHeight"
+        MinWidth="420"
+        MaxWidth="480"
+        ShowInTaskbar="False">
+
+    <!--
+        MAPPING NOTES
+        ═══════════════════════════════════════════════════════════════════════════
+        WPF Feature                      Avalonia Equivalent                Caveat
+        ────────────────────────────────────────────────────────────────────────────
+        WindowStyle="None"               SystemDecorations="None"           Exact equivalent.
+        AllowsTransparency="True"        Background="Transparent"           No separate flag needed.
+        ResizeMode="NoResize"            CanResize="False"                  Exact equivalent.
+        SizeToContent="WidthAndHeight"   SizeToContent="WidthAndHeight"     Exact equivalent.
+        DropShadowEffect (15/2/0.3)      BoxShadow="0 2 15 0 #4D000000"    [B6] Near-equivalent.
+                                                                            0.3 × 0xFF ≈ 0x4D.
+        DialogResult = true/false        this.Close(result)                 [B10] Avalonia modal pattern:
+                                                                            caller uses await ShowDialog<bool?>().
+        IsCancel="True" on Cancel btn    OnKeyDown Escape handler           [B9] No IsCancel in Avalonia.
+        &#x21BB; (restart arrow)         &#x21BB; Unicode — no font dep.    Standard Unicode character.
+        ═══════════════════════════════════════════════════════════════════════════
+    -->
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="/Avalonia/Styles/Theme.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Confirm (Restart Now) button — matches DialogConfirmButtonStyle in WPF source -->
+            <ControlTheme x:Key="DialogConfirmButtonStyle" TargetType="Button">
+                <Setter Property="Background"      Value="{DynamicResource BrushCBAYellow}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushCBABlack}"/>
+                <Setter Property="FontFamily"      Value="Segoe UI"/>
+                <Setter Property="FontSize"        Value="14"/>
+                <Setter Property="FontWeight"      Value="SemiBold"/>
+                <Setter Property="Height"          Value="40"/>
+                <Setter Property="MinWidth"        Value="140"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="20,0">
+                            <ContentPresenter Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter>
+                <Style Selector="^:pointerover /template/ Border#Bd">
+                    <Setter Property="Background" Value="{DynamicResource BrushCBAAmber}"/>
+                </Style>
+                <Style Selector="^:pressed /template/ Border#Bd">
+                    <Setter Property="Background" Value="#CC9600"/>
+                </Style>
+                <Style Selector="^:disabled /template/ Border#Bd">
+                    <Setter Property="Background" Value="{DynamicResource BrushCBAMidGrey}"/>
+                </Style>
+                <Style Selector="^:disabled">
+                    <Setter Property="Foreground" Value="{DynamicResource BrushCBADarkGrey}"/>
+                </Style>
+            </ControlTheme>
+
+            <!-- Cancel button — matches DialogCancelButtonStyle in WPF source -->
+            <ControlTheme x:Key="DialogCancelButtonStyle" TargetType="Button">
+                <Setter Property="Background"      Value="{DynamicResource BrushCBABlack}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushCBAWhite}"/>
+                <Setter Property="FontFamily"      Value="Segoe UI"/>
+                <Setter Property="FontSize"        Value="14"/>
+                <Setter Property="FontWeight"      Value="SemiBold"/>
+                <Setter Property="Height"          Value="40"/>
+                <Setter Property="MinWidth"        Value="140"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="20,0">
+                            <ContentPresenter Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter>
+                <Style Selector="^:pointerover /template/ Border#Bd">
+                    <Setter Property="Background" Value="{DynamicResource BrushCBADarkGrey}"/>
+                </Style>
+                <Style Selector="^:pressed /template/ Border#Bd">
+                    <Setter Property="Background" Value="{DynamicResource BrushCBABlack}"/>
+                </Style>
+            </ControlTheme>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- Outer drop-shadow wrapper
+         [B6] DropShadowEffect BlurRadius=15, ShadowDepth=2, Opacity=0.3
+              → BoxShadow="0 2 15 0 #4D000000" -->
+    <Border CornerRadius="10"
+            Background="{DynamicResource BrushCBAWhite}"
+            BorderBrush="{DynamicResource BrushCBADarkGrey}"
+            BorderThickness="2"
+            Margin="0,0,0,10"
+            BoxShadow="0 2 15 0 #4D000000">
+
+        <Grid RowDefinitions="Auto,Auto,Auto">
+
+            <!-- ══ HEADER ══ -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource BrushCBABlack}"
+                    CornerRadius="8,8,0,0"
+                    Padding="20,14">
+                <Grid ColumnDefinitions="Auto,*">
+
+                    <Grid Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Ellipse Width="30" Height="30"
+                                 Stroke="{DynamicResource BrushCBAYellow}" StrokeThickness="2"
+                                 Fill="Transparent"/>
+                        <!-- &#x21BB; is standard Unicode CLOCKWISE OPEN CIRCLE ARROW — no font dependency -->
+                        <TextBlock Text="&#x21BB;" FontSize="17"
+                                   Foreground="{DynamicResource BrushCBAYellow}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontWeight="Bold" Margin="0,-2,0,0"/>
+                    </Grid>
+
+                    <TextBlock Grid.Column="1"
+                               Text="Confirm Restart"
+                               Foreground="{DynamicResource BrushCBAWhite}"
+                               FontFamily="Segoe UI"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               AutomationProperties.Name="Confirm Restart dialog title"/>
+                </Grid>
+            </Border>
+
+            <!-- ══ MESSAGE AREA ══ -->
+            <StackPanel Grid.Row="1" Margin="24,20,24,16">
+                <TextBlock Name="TxtPrimaryMessage"
+                           Text="Are you sure you want to restart your computer now?"
+                           FontFamily="Segoe UI" FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource BrushCBABlack}"
+                           TextWrapping="Wrap" LineHeight="22"
+                           Margin="0,0,0,10"
+                           AutomationProperties.Name="Are you sure you want to restart your computer now?"/>
+                <TextBlock Name="TxtSecondaryMessage"
+                           Text="Your device will restart immediately. Please save all open work before proceeding."
+                           FontFamily="Segoe UI" FontSize="13" FontWeight="Normal"
+                           Foreground="{DynamicResource BrushCBADarkGrey}"
+                           TextWrapping="Wrap" LineHeight="20"
+                           AutomationProperties.Name="Your device will restart immediately. Please save all open work before proceeding."/>
+            </StackPanel>
+
+            <!-- ══ BUTTONS ══ -->
+            <Grid Grid.Row="2" Margin="24,0,24,20"
+                  ColumnDefinitions="*,16,*">
+
+                <Button Name="BtnConfirmRestart"
+                        Grid.Column="0"
+                        Content="Restart Now"
+                        Theme="{StaticResource DialogConfirmButtonStyle}"
+                        Click="BtnConfirmRestart_Click"
+                        AutomationProperties.Name="Restart Now — confirm restart immediately"/>
+
+                <!--
+                    [B9] WPF IsCancel="True" has no Avalonia equivalent.
+                         Escape key handled in OnKeyDown override in code-behind.
+                -->
+                <Button Name="BtnCancelDialog"
+                        Grid.Column="2"
+                        Content="Cancel"
+                        Theme="{StaticResource DialogCancelButtonStyle}"
+                        Click="BtnCancelDialog_Click"
+                        AutomationProperties.Name="Cancel — return to previous window"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

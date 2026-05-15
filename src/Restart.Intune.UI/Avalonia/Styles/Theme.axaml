@@ -1,0 +1,293 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════
+         CBA BRAND COLOURS
+         Identical values to WPF Styles/Theme.xaml
+    ═══════════════════════════════════════════ -->
+    <Color x:Key="CBAYellow">#FFD100</Color>
+    <Color x:Key="CBABlack">#1A1A1A</Color>
+    <Color x:Key="CBAWhite">#FFFFFF</Color>
+    <Color x:Key="CBALightGrey">#F5F5F5</Color>
+    <Color x:Key="CBAMidGrey">#D9D9D9</Color>
+    <Color x:Key="CBADarkGrey">#6B6B6B</Color>
+    <Color x:Key="CBAAmber">#F59E0B</Color>
+    <Color x:Key="CBAAmberLight">#FFFBEB</Color>
+    <Color x:Key="CBARedAlert">#DC2626</Color>
+    <Color x:Key="CBAGreenSuccess">#16A34A</Color>
+
+    <SolidColorBrush x:Key="BrushCBAYellow"     Color="{StaticResource CBAYellow}"/>
+    <SolidColorBrush x:Key="BrushCBABlack"      Color="{StaticResource CBABlack}"/>
+    <SolidColorBrush x:Key="BrushCBAWhite"      Color="{StaticResource CBAWhite}"/>
+    <SolidColorBrush x:Key="BrushCBALightGrey"  Color="{StaticResource CBALightGrey}"/>
+    <SolidColorBrush x:Key="BrushCBAMidGrey"    Color="{StaticResource CBAMidGrey}"/>
+    <SolidColorBrush x:Key="BrushCBADarkGrey"   Color="{StaticResource CBADarkGrey}"/>
+    <SolidColorBrush x:Key="BrushCBAAmber"      Color="{StaticResource CBAAmber}"/>
+    <SolidColorBrush x:Key="BrushCBAAmberLight" Color="{StaticResource CBAAmberLight}"/>
+    <SolidColorBrush x:Key="BrushCBARedAlert"   Color="{StaticResource CBARedAlert}"/>
+
+    <!-- ═══════════════════════════════════════════
+         SEMANTIC BRUSH ALIASES
+    ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SeparatorBrush"      Color="{StaticResource CBAMidGrey}"/>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CBALightGrey}"/>
+    <SolidColorBrush x:Key="AccentBrush"         Color="{StaticResource CBAYellow}"/>
+
+    <!-- ═══════════════════════════════════════════
+         TAB-STYLE RADIOBUTTON (toggle strip)
+         WPF mapping: ControlTemplate.Triggers (IsChecked=True → BorderBrush)
+         Avalonia:    ControlTheme with :checked pseudo-class selector
+    ═══════════════════════════════════════════ -->
+    <ControlTheme x:Key="TabRadioButtonStyle" TargetType="RadioButton">
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="FontSize"   Value="12"/>
+        <Setter Property="Foreground" Value="{DynamicResource BrushCBABlack}"/>
+        <Setter Property="Cursor"     Value="Hand"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="RadioButton">
+                <Border Name="TabBorder"
+                        Background="{TemplateBinding Background}"
+                        Padding="12,6"
+                        BorderThickness="0,0,0,2"
+                        BorderBrush="Transparent">
+                    <ContentPresenter HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <!-- WPF: Trigger IsChecked=True → BorderBrush = AccentBrush -->
+        <Style Selector="^:checked /template/ Border#TabBorder">
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+        </Style>
+    </ControlTheme>
+
+    <!-- ═══════════════════════════════════════════
+         TYPOGRAPHY
+    ═══════════════════════════════════════════ -->
+    <ControlTheme x:Key="TextHeading" TargetType="TextBlock">
+        <Setter Property="FontFamily"   Value="Segoe UI"/>
+        <Setter Property="FontSize"     Value="16"/>
+        <Setter Property="FontWeight"   Value="SemiBold"/>
+        <Setter Property="Foreground"   Value="{DynamicResource BrushCBABlack}"/>
+        <Setter Property="LineHeight"   Value="24"/>
+    </ControlTheme>
+
+    <ControlTheme x:Key="TextBody" TargetType="TextBlock">
+        <Setter Property="FontFamily"   Value="Segoe UI"/>
+        <Setter Property="FontSize"     Value="13"/>
+        <Setter Property="Foreground"   Value="{DynamicResource BrushCBABlack}"/>
+        <Setter Property="LineHeight"   Value="20"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </ControlTheme>
+
+    <ControlTheme x:Key="TextCaption" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="FontSize"   Value="11"/>
+        <Setter Property="Foreground" Value="{DynamicResource BrushCBADarkGrey}"/>
+    </ControlTheme>
+
+    <ControlTheme x:Key="TextCountdown" TargetType="TextBlock">
+        <Setter Property="FontFamily"          Value="Segoe UI"/>
+        <Setter Property="FontSize"            Value="22"/>
+        <Setter Property="FontWeight"          Value="Bold"/>
+        <Setter Property="Foreground"          Value="{DynamicResource BrushCBABlack}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+    </ControlTheme>
+
+    <ControlTheme x:Key="TextScheduled" TargetType="TextBlock">
+        <Setter Property="FontFamily"   Value="Segoe UI"/>
+        <Setter Property="FontSize"     Value="14"/>
+        <Setter Property="FontWeight"   Value="SemiBold"/>
+        <Setter Property="Foreground"   Value="{DynamicResource BrushCBABlack}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </ControlTheme>
+
+    <!-- ═══════════════════════════════════════════
+         PRIMARY BUTTON
+         WPF mapping: ControlTemplate.Triggers
+           IsMouseOver=True  → #E6BC00
+           IsPressed=True    → #CCA800
+           IsEnabled=False   → BrushCBAMidGrey
+         Avalonia: ControlTheme with pseudo-class selectors
+    ═══════════════════════════════════════════ -->
+    <ControlTheme x:Key="ButtonPrimary" TargetType="Button">
+        <Setter Property="Background"      Value="{StaticResource BrushCBAYellow}"/>
+        <Setter Property="Foreground"      Value="{DynamicResource BrushCBABlack}"/>
+        <Setter Property="FontFamily"      Value="Segoe UI"/>
+        <Setter Property="FontSize"        Value="13"/>
+        <Setter Property="FontWeight"      Value="SemiBold"/>
+        <Setter Property="Height"          Value="40"/>
+        <Setter Property="MinWidth"        Value="140"/>
+        <Setter Property="Padding"         Value="20,0"/>
+        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="Button">
+                <Border Name="border"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="6"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover /template/ Border#border">
+            <Setter Property="Background" Value="#E6BC00"/>
+        </Style>
+        <Style Selector="^:pressed /template/ Border#border">
+            <Setter Property="Background" Value="#CCA800"/>
+        </Style>
+        <Style Selector="^:disabled /template/ Border#border">
+            <Setter Property="Background" Value="{StaticResource BrushCBAMidGrey}"/>
+        </Style>
+    </ControlTheme>
+
+    <!-- ═══════════════════════════════════════════
+         SECONDARY BUTTON — Outlined
+         WPF mapping: ControlTemplate.Triggers
+           IsMouseOver=True → BrushCBALightGrey bg, BrushCBADarkGrey border
+           IsPressed=True   → BrushCBAMidGrey bg
+         Avalonia: ControlTheme with pseudo-class selectors
+    ═══════════════════════════════════════════ -->
+    <ControlTheme x:Key="ButtonSecondary" TargetType="Button">
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="Foreground"      Value="{DynamicResource BrushCBABlack}"/>
+        <Setter Property="FontFamily"      Value="Segoe UI"/>
+        <Setter Property="FontSize"        Value="13"/>
+        <Setter Property="FontWeight"      Value="Normal"/>
+        <Setter Property="Height"          Value="40"/>
+        <Setter Property="MinWidth"        Value="120"/>
+        <Setter Property="Padding"         Value="20,0"/>
+        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource BrushCBAMidGrey}"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="Button">
+                <Border Name="border"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="6"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover /template/ Border#border">
+            <Setter Property="Background"  Value="{StaticResource BrushCBALightGrey}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushCBADarkGrey}"/>
+        </Style>
+        <Style Selector="^:pressed /template/ Border#border">
+            <Setter Property="Background" Value="{StaticResource BrushCBAMidGrey}"/>
+        </Style>
+    </ControlTheme>
+
+    <!-- ═══════════════════════════════════════════
+         COMBOBOX — Postpone Duration Selector
+    ═══════════════════════════════════════════ -->
+    <ControlTheme x:Key="ComboPostpone" TargetType="ComboBox">
+        <Setter Property="FontFamily"               Value="Segoe UI"/>
+        <Setter Property="FontSize"                 Value="13"/>
+        <Setter Property="Height"                   Value="36"/>
+        <Setter Property="MinWidth"                 Value="160"/>
+        <Setter Property="Padding"                  Value="10,0"/>
+        <Setter Property="BorderBrush"              Value="{DynamicResource BrushCBAMidGrey}"/>
+        <Setter Property="BorderThickness"          Value="1.5"/>
+        <Setter Property="Background"               Value="{DynamicResource BrushCBAWhite}"/>
+        <Setter Property="Foreground"               Value="{DynamicResource BrushCBABlack}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </ControlTheme>
+
+    <!-- ═══════════════════════════════════════════
+         SPINNER BUTTON — Time Selector Up/Down
+         WPF mapping: ControlTemplate.Triggers
+           IsMouseOver=True → BrushCBALightGrey bg, BrushCBABlack fg
+           IsEnabled=False  → BrushCBAMidGrey fg
+         NOTE: FontFamily "Segoe MDL2 Assets" is Windows-only.
+               Icons (&#xE70E;/&#xE70D;) will not render on non-Windows.
+    ═══════════════════════════════════════════ -->
+    <ControlTheme x:Key="ButtonSpinner" TargetType="Button">
+        <Setter Property="Width"           Value="24"/>
+        <Setter Property="Height"          Value="16"/>
+        <Setter Property="FontFamily"      Value="Segoe MDL2 Assets"/>
+        <Setter Property="FontSize"        Value="9"/>
+        <Setter Property="Foreground"      Value="{DynamicResource BrushCBADarkGrey}"/>
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding"         Value="0"/>
+        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="Button">
+                <Border Name="border"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="3">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover /template/ Border#border">
+            <Setter Property="Background" Value="{StaticResource BrushCBALightGrey}"/>
+        </Style>
+        <Style Selector="^:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource BrushCBABlack}"/>
+        </Style>
+        <Style Selector="^:disabled">
+            <Setter Property="Foreground" Value="{StaticResource BrushCBAMidGrey}"/>
+        </Style>
+    </ControlTheme>
+
+    <!-- ═══════════════════════════════════════════
+         MORE INFORMATION TOGGLE BUTTON
+         WPF source: inline style in RestartRequiredWindow.xaml
+         Moved here for reuse.
+         WPF mapping: ControlTemplate.Triggers
+           IsChecked=True   → Arrow text ⌄ → ⌃
+           IsMouseOver=True → BrushCBALightGrey background
+         Avalonia: ControlTheme with :checked and :pointerover selectors
+    ═══════════════════════════════════════════ -->
+    <ControlTheme x:Key="MoreInfoToggleStyle" TargetType="ToggleButton">
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="BorderBrush"     Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="ToggleButton">
+                <Border Name="Bd"
+                        Background="{TemplateBinding Background}"
+                        Padding="8,4">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Name="Arrow"
+                                   Text="&#x2304;"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,6,0"
+                                   Foreground="{DynamicResource BrushCBABlack}"/>
+                        <TextBlock Text="More Information"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource BrushCBABlack}"/>
+                    </StackPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <!-- WPF: Trigger IsChecked=True → Arrow.Text = ⌃ -->
+        <Style Selector="^:checked /template/ TextBlock#Arrow">
+            <Setter Property="Text" Value="&#x2303;"/>
+        </Style>
+        <!-- WPF: Trigger IsMouseOver=True → Background = BrushCBALightGrey -->
+        <Style Selector="^:pointerover /template/ Border#Bd">
+            <Setter Property="Background" Value="{DynamicResource BrushCBALightGrey}"/>
+        </Style>
+    </ControlTheme>
+
+</ResourceDictionary>

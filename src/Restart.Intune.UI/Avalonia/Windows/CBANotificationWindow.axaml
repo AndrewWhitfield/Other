@@ -1,0 +1,499 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:Restart.Intune.UI.Avalonia.Converters;assembly=Restart.Intune.UI"
+        mc:Ignorable="d"
+        x:Class="Restart.Intune.UI.Avalonia.Windows.CBANotificationWindow"
+        x:CompileBindings="False"
+        Title="Device Restart Notification"
+        Width="460"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="Manual"
+        SystemDecorations="None"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True">
+
+    <!--
+        MAPPING NOTES
+        ═══════════════════════════════════════════════════════════════════════════
+        WPF Feature                     Avalonia Equivalent                 Caveat
+        ───────────────────────────────────────────────────────────────────────────
+        RestartWindowBase (base class)  Standalone Window                   [B4] Base class is WPF-only.
+                                                                            Code-behind re-wires handlers.
+        WindowStyle="None"              SystemDecorations="None"            Exact functional equivalent.
+        AllowsTransparency="True"       Background="Transparent"            No separate flag needed.
+        ResizeMode="NoResize"           CanResize="False"                   Exact functional equivalent.
+        DropShadowEffect                BoxShadow attribute on Border       [B6] Visual near-equivalent.
+        Window.Loaded event             Window.Opened event                 [B8] Functionally equivalent.
+        Visibility bindings             IsVisible + VisibilityToBoolConverter [B1] ViewModel WPF type.
+        Hyperlink inline element        HyperlinkButton                     [B7] Block-level element.
+        Segoe MDL2 Assets icons         Segoe MDL2 Assets (Windows only)    [B5] Non-Windows: blank.
+        HeaderTitleForeground (Brush)   IBrush binding                      [B2] WPF type mismatch.
+        FooterLogoSource (ImageSource)  IImage binding                      [B3] WPF type mismatch.
+        ═══════════════════════════════════════════════════════════════════════════
+    -->
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="/Avalonia/Styles/Theme.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <converters:InverseBooleanConverter x:Key="InverseBoolConverter"/>
+            <converters:StringNotEmptyToVisibleConverter x:Key="StringNotEmptyToVisibilityConverter"/>
+            <converters:VisibilityToBoolConverter x:Key="VisibilityToBoolConverter"/>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROOT: Drop shadow container
+         [B6] DropShadowEffect BlurRadius=20, ShadowDepth=4, Color=#22000000
+              → BoxShadow="0 4 20 0 #22000000"
+    ════════════════════════════════════════════════════════ -->
+    <Border Margin="10"
+            CornerRadius="10"
+            Background="{DynamicResource BrushCBAWhite}"
+            BoxShadow="0 4 20 0 #22000000">
+
+        <Grid RowDefinitions="Auto,Auto,Auto,1,Auto,Auto">
+
+            <!-- ═══════════════════════════════════════════
+                 ROW 0: Security Patch Alert Banner
+                 Conditionally shown via code-behind
+            ═══════════════════════════════════════════ -->
+            <Border Name="SecurityBanner"
+                    Grid.Row="0"
+                    Background="#FFF3CD"
+                    CornerRadius="10,10,0,0"
+                    Padding="16,10"
+                    IsVisible="False">
+                <StackPanel VerticalAlignment="Center">
+                    <!--
+                        [B2] HeaderTitleForeground is System.Windows.Media.Brush.
+                        Binding will not resolve until ViewModel uses IBrush.
+                    -->
+                    <TextBlock Name="BannerHeading"
+                               Text="{Binding TitleText}"
+                               FontFamily="Segoe UI"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Foreground="#1A1A1A"
+                               Margin="0,0,0,4"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- [B5] Segoe MDL2 Assets shield icon — Windows-only -->
+                        <TextBlock Name="BannerIcon"
+                                   Text="&#xE72E;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"
+                                   Foreground="#92400E"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,10,0"
+                                   AutomationProperties.Name="Security shield icon"/>
+                        <TextBlock Name="BannerTitle"
+                                   Text="Security Update Applied"
+                                   FontFamily="Segoe UI"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="#92400E"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════
+                 ROW 1: Toggle Strip
+                 [B1] ToggleStripVisibility converted Visibility → bool
+            ═══════════════════════════════════════════ -->
+            <Border Grid.Row="1"
+                    IsVisible="{Binding ToggleStripVisibility,
+                        Converter={StaticResource VisibilityToBoolConverter}}"
+                    BorderThickness="0,0,0,1"
+                    BorderBrush="{StaticResource SeparatorBrush}"
+                    Padding="16,6,16,0">
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center">
+                    <RadioButton Content="Action Required"
+                                 IsChecked="{Binding IsShowingUpdateDetails,
+                                     Converter={StaticResource InverseBoolConverter},
+                                     Mode=TwoWay}"
+                                 Theme="{StaticResource TabRadioButtonStyle}"
+                                 Margin="0,0,8,0"/>
+                    <RadioButton Content="About this update"
+                                 IsChecked="{Binding IsShowingUpdateDetails,
+                                     Mode=TwoWay}"
+                                 Theme="{StaticResource TabRadioButtonStyle}"
+                                 Margin="8,0,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════
+                 ROW 2: Main Content Body
+                 [B1] ScheduledRestartVisibility / UpdateDetailsVisibility
+            ═══════════════════════════════════════════ -->
+
+            <!-- Scheduled Restart panel -->
+            <StackPanel Grid.Row="2"
+                        IsVisible="{Binding ScheduledRestartVisibility,
+                            Converter={StaticResource VisibilityToBoolConverter}}">
+                <StackPanel Margin="24,20,24,16">
+
+                    <!-- Restart info card -->
+                    <Border Background="{DynamicResource BrushCBALightGrey}"
+                            CornerRadius="8"
+                            Padding="16,14"
+                            Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="Scheduled Restart"
+                                       Theme="{StaticResource TextCaption}"
+                                       Margin="0,0,0,4"
+                                       AutomationProperties.Name="Scheduled restart label"/>
+
+                            <TextBlock Name="TxtRestartDateTime"
+                                       Text="Monday, 20 April 2026 at 6:00 PM"
+                                       Theme="{StaticResource TextScheduled}"
+                                       Margin="0,0,0,10"
+                                       AutomationProperties.Name="Restart date and time"/>
+
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center"
+                                        Margin="0,0,0,2">
+                                <!-- [B5] Segoe MDL2 Assets clock icon — Windows-only -->
+                                <TextBlock Text="&#xE916;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource BrushCBADarkGrey}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,6,0"
+                                           AutomationProperties.Name="Countdown clock icon"/>
+                                <TextBlock Text="Time remaining:"
+                                           Theme="{StaticResource TextCaption}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,6,0"/>
+                                <TextBlock Name="TxtCountdown"
+                                           Text="23:47:00"
+                                           FontFamily="Segoe UI"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource BrushCBABlack}"
+                                           VerticalAlignment="Center"
+                                           AutomationProperties.Name="Time remaining countdown"
+                                           AutomationProperties.LiveSetting="Polite"/>
+                            </StackPanel>
+
+                            <ProgressBar Name="UrgencyBar"
+                                         Height="4"
+                                         Minimum="0"
+                                         Maximum="100"
+                                         Value="5"
+                                         Margin="0,10,0,0"
+                                         Background="{DynamicResource BrushCBAMidGrey}"
+                                         Foreground="{DynamicResource BrushCBAYellow}"
+                                         BorderThickness="0"
+                                         AutomationProperties.Name="Time elapsed urgency indicator"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Theme="{StaticResource TextBody}"
+                               Margin="0,0,0,4"
+                               Text="{Binding InstructionText}"/>
+
+                    <TextBlock Name="TxtPostponeWarning"
+                               IsVisible="False"
+                               Margin="0,8,0,0"
+                               FontFamily="Segoe UI"
+                               FontSize="11"
+                               Foreground="{DynamicResource BrushCBARedAlert}"
+                               TextWrapping="Wrap"
+                               AutomationProperties.LiveSetting="Assertive">
+                        &#x26A0; You have 1 postpone remaining. The restart cannot be deferred further after this.
+                    </TextBlock>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Installed Update Details panel -->
+            <StackPanel Grid.Row="2"
+                        IsVisible="{Binding UpdateDetailsVisibility,
+                            Converter={StaticResource VisibilityToBoolConverter}}"
+                        Margin="16,12,16,12">
+                <Border Background="{StaticResource CardBackgroundBrush}"
+                        CornerRadius="8"
+                        Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="Installed Update(s)"
+                                   FontSize="12"
+                                   Opacity="0.7"
+                                   Margin="0,0,0,4"/>
+                        <ScrollViewer MaxHeight="135"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      Margin="0,0,0,8">
+                            <ItemsControl ItemsSource="{Binding InstalledUpdates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="4,2,0,2">
+                                            <TextBlock Text="•"
+                                                       FontSize="14"
+                                                       FontFamily="Segoe UI"
+                                                       VerticalAlignment="Top"
+                                                       Margin="0,0,6,0"
+                                                       DockPanel.Dock="Left"/>
+                                            <TextBlock FontSize="14"
+                                                       FontFamily="Segoe UI"
+                                                       TextWrapping="Wrap"
+                                                       VerticalAlignment="Top">
+                                                <Run Text="{Binding Id, Mode=OneWay}"/>
+                                                <Run Text=" — "/>
+                                                <Run Text="{Binding Title, Mode=OneWay}"/>
+                                            </TextBlock>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <Separator Margin="0,4,0,8"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="&#x2713;"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       FontSize="14"
+                                       Margin="0,0,6,0"/>
+                            <TextBlock Text="This update requires a device restart to complete installation."
+                                       TextWrapping="Wrap"
+                                       FontSize="13"
+                                       Opacity="0.85"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════
+                 ROW 3: Horizontal Divider
+            ═══════════════════════════════════════════ -->
+            <Border Grid.Row="3"
+                    Background="{DynamicResource BrushCBAMidGrey}"
+                    Height="1"/>
+
+            <!-- ═══════════════════════════════════════════
+                 ROW 4: Action Footer — State Machine
+                 [B1] all Visibility bindings converted
+            ═══════════════════════════════════════════ -->
+            <StackPanel Grid.Row="4">
+
+                <!-- Default state: Postpone + Restart -->
+                <Grid IsVisible="{Binding DefaultActionsVisibility,
+                          Converter={StaticResource VisibilityToBoolConverter}}"
+                      HorizontalAlignment="Stretch"
+                      ColumnDefinitions="*,*">
+
+                    <Button Name="BtnEnterPostponeMode"
+                            Grid.Column="0"
+                            Theme="{StaticResource ButtonSecondary}"
+                            Height="44" MinWidth="0" Padding="8,0"
+                            Margin="8,8,8,8"
+                            VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                            Click="BtnEnterPostponeMode_Click"
+                            AutomationProperties.Name="Postpone reminder"
+                            ToolTip.Tip="Select a time to delay this reminder.">
+                        Postpone
+                    </Button>
+
+                    <Button Name="BtnEnterRestartMode"
+                            Grid.Column="1"
+                            Theme="{StaticResource ButtonPrimary}"
+                            Height="44" MinWidth="0" Padding="8,0"
+                            Margin="8,8,8,8"
+                            VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                            Click="BtnEnterRestartMode_Click"
+                            AutomationProperties.Name="Restart device"
+                            ToolTip.Tip="Save your work first. This will immediately restart your device.">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <!-- [B5] Segoe MDL2 Assets — Windows-only -->
+                            <TextBlock Text="&#xE777;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="13"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"
+                                       AutomationProperties.Name="Restart icon"/>
+                            <TextBlock Text="Restart" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <!-- Postpone mode -->
+                <StackPanel IsVisible="{Binding PostponeModeActionsVisibility,
+                                Converter={StaticResource VisibilityToBoolConverter}}">
+                    <TextBlock Text="Select a time to delay the next notification and click Postpone."
+                               Theme="{StaticResource TextBody}"
+                               FontSize="12"
+                               Margin="16,12,16,4"/>
+                    <Grid HorizontalAlignment="Stretch" ColumnDefinitions="*,*,*">
+
+                        <Border Grid.Column="0"
+                                BorderBrush="{DynamicResource BrushCBAMidGrey}"
+                                BorderThickness="1.5" CornerRadius="6"
+                                Background="{DynamicResource BrushCBAWhite}"
+                                Height="44" Margin="8,8,8,8"
+                                VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                                ToolTip.Tip="Select the time to postpone the restart until">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Name="PostponeTimeTextBlock"
+                                           Grid.Column="0"
+                                           Text="--:-- --"
+                                           FontFamily="Segoe UI" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource BrushCBABlack}"
+                                           VerticalAlignment="Center" Margin="10,0,0,0"
+                                           AutomationProperties.Name="Selected postpone time"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,4,0">
+                                    <Button Name="TimeIncrementButton"
+                                            Theme="{StaticResource ButtonSpinner}"
+                                            Content="&#xE70E;"
+                                            Click="TimeIncrementButton_Click"
+                                            ToolTip.Tip="Later"
+                                            AutomationProperties.Name="Increase postpone time by one hour"/>
+                                    <Button Name="TimeDecrementButton"
+                                            Theme="{StaticResource ButtonSpinner}"
+                                            Content="&#xE70D;"
+                                            Click="TimeDecrementButton_Click"
+                                            ToolTip.Tip="Earlier"
+                                            AutomationProperties.Name="Decrease postpone time by one hour"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Button Name="BtnPostpone"
+                                Grid.Column="1"
+                                Theme="{StaticResource ButtonSecondary}"
+                                Height="44" MinWidth="0" Padding="8,0"
+                                Margin="8,8,8,8"
+                                VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                                Click="BtnPostpone_Click"
+                                AutomationProperties.Name="Confirm postpone"
+                                AutomationProperties.HelpText="Delay this reminder by the selected duration"
+                                ToolTip.Tip="Delay this reminder. The restart will still occur at the scheduled time.">
+                            Postpone
+                        </Button>
+
+                        <Button Name="BtnCancelPostpone"
+                                Grid.Column="2"
+                                Theme="{StaticResource ButtonSecondary}"
+                                Height="44" MinWidth="0" Padding="8,0"
+                                Margin="8,8,8,8"
+                                VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                                Click="BtnCancel_Click"
+                                AutomationProperties.Name="Cancel postpone">
+                            Cancel
+                        </Button>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Restart mode -->
+                <Grid IsVisible="{Binding RestartModeActionsVisibility,
+                          Converter={StaticResource VisibilityToBoolConverter}}"
+                      HorizontalAlignment="Stretch"
+                      ColumnDefinitions="*,*">
+
+                    <Button Name="BtnRestartNow"
+                            Grid.Column="0"
+                            Theme="{StaticResource ButtonPrimary}"
+                            Height="44" MinWidth="0" Padding="8,0"
+                            Margin="8,8,8,8"
+                            VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                            Click="BtnRestartNow_Click"
+                            AutomationProperties.Name="Restart now"
+                            AutomationProperties.HelpText="Immediately restart this device"
+                            ToolTip.Tip="Save your work first. This will immediately restart your device.">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <!-- [B5] Segoe MDL2 Assets — Windows-only -->
+                            <TextBlock Text="&#xE777;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="13"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"
+                                       AutomationProperties.Name="Restart icon"/>
+                            <TextBlock Text="Restart Now" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Name="BtnCancelRestart"
+                            Grid.Column="1"
+                            Theme="{StaticResource ButtonSecondary}"
+                            Height="44" MinWidth="0" Padding="8,0"
+                            Margin="8,8,8,8"
+                            VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                            Click="BtnCancel_Click"
+                            AutomationProperties.Name="Cancel restart">
+                        Cancel
+                    </Button>
+                </Grid>
+
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════
+                 ROW 5: Brand Footer
+            ═══════════════════════════════════════════ -->
+            <Border Grid.Row="5"
+                    Background="{DynamicResource BrushCBALightGrey}"
+                    CornerRadius="0,0,10,10"
+                    Padding="24,10">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+
+                    <Border Grid.Column="0"
+                            Width="32" Height="32"
+                            CornerRadius="16"
+                            Background="{DynamicResource BrushCBABlack}"
+                            Margin="0,0,10,0">
+                        <!--
+                            [B3] FooterLogoSource is System.Windows.Media.ImageSource.
+                            Will not bind until ViewModel uses IImage.
+                        -->
+                        <Image Name="BrandLogo"
+                               Source="{Binding FooterLogoSource}"
+                               Width="31" Height="17"
+                               Stretch="Uniform"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding FooterText}"
+                                   Theme="{StaticResource TextCaption}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource BrushCBABlack}"/>
+                        <TextBlock Text="CBA Technology"
+                                   Theme="{StaticResource TextCaption}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <TextBlock Name="TxtBuildVersion"
+                                   Text="v2.0.0"
+                                   Theme="{StaticResource TextCaption}"
+                                   VerticalAlignment="Center"
+                                   AutomationProperties.Name="Application build version"/>
+                        <!--
+                            [B7] WPF inline Hyperlink → HyperlinkButton block element
+                        -->
+                        <TextBlock Text=" | "
+                                   Theme="{StaticResource TextCaption}"
+                                   VerticalAlignment="Center"
+                                   IsVisible="{Binding HelpUrl,
+                                       Converter={StaticResource StringNotEmptyToVisibilityConverter}}"/>
+                        <HyperlinkButton Name="HelpLink"
+                                         NavigateUri="{Binding HelpUrl}"
+                                         VerticalAlignment="Center"
+                                         Foreground="{DynamicResource BrushCBADarkGrey}"
+                                         IsVisible="{Binding HelpUrl,
+                                             Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
+                                         ToolTip.Tip="{Binding HelpUrl}"
+                                         Click="HelpLink_Click">
+                            Help
+                        </HyperlinkButton>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+        </Grid>
+    </Border>
+</Window>
