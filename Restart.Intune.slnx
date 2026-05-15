@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.MD" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Restart.Intune.App/Restart.Intune.App.csproj" />
+    <Project Path="src/Restart.Intune.Core/Restart.Intune.Core.csproj" />
+    <Project Path="src/Restart.Intune.Platform.macOS/Restart.Intune.Platform.macOS.csproj" />
+    <Project Path="src/Restart.Intune.Platform.Windows/Restart.Intune.Platform.Windows.csproj" />
+    <Project Path="src/Restart.Intune.UI/Restart.Intune.UI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Restart.Intune.Core.Tests/Restart.Intune.Core.Tests.csproj" />
+  </Folder>
+</Solution>
