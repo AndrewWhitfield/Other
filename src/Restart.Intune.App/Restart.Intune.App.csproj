@@ -25,8 +25,9 @@
     <ProjectReference Include="..\Restart.Intune.UI\Restart.Intune.UI.csproj" />
   </ItemGroup>
 
-  <!-- Copy Dependencies and PowerShell folders from Restart.Intune.UI into publish output -->
-  <ItemGroup>
+  <!-- Copy Windows-only folders (Dependencies, PowerShell) into publish output.
+       Conditional so macOS builds are not affected. -->
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
     <None Include="..\Restart.Intune.UI\Dependencies\**\*.*">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <Link>Dependencies\%(RecursiveDir)%(Filename)%(Extension)</Link>
@@ -37,7 +38,8 @@
     </None>
   </ItemGroup>
 
-  <Target Name="CopyUiFoldersToPublish" AfterTargets="Publish">
+  <Target Name="CopyUiFoldersToPublish" AfterTargets="Publish"
+          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
     <ItemGroup>
       <_UiDependencies Include="..\Restart.Intune.UI\Dependencies\**\*.*" />
       <_UiPowerShell Include="..\Restart.Intune.UI\PowerShell\**\*.*" />
